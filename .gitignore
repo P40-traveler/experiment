@@ -4,5 +4,6 @@ Source/*.cpp
 *cpython-*
 Source/build/*
 Source/.ipynb_checkpoints/*
+*.pkl
 
 

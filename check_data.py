@@ -37,65 +37,64 @@ def parse_edge_table_name(table_name):
 # FKPK关系不能形成环
 # 这里把FKPK关系当做有向图，检测环并打破环
 def detect_and_break_cycles(FKtoKDict):
-    # 使用DFS检测环
-    def find_cycle(graph, start):
-        visited = set()
-        stack = []
-        path = []
+    def remove_cycles(graph):
+        visited = set()  # 记录访问过的节点
+        stack = set()  # 记录当前路径中的节点
+        parent = {}  # 记录每个节点的父节点
 
         def dfs(node):
-            if node in path:
-                return path[path.index(node):]  # 找到环
-            if node in visited:
-                return None
             visited.add(node)
-            path.append(node)
-            for neighbor in graph.get(node, []):
-                cycle = dfs(neighbor)
-                if cycle is not None:
-                    return cycle
-            path.pop()
-            return None
+            stack.add(node)
+            for neighbor in graph[node]:
+                if neighbor not in visited:
+                    parent[neighbor] = node
+                    dfs(neighbor)
+                elif neighbor in stack and parent[node] != neighbor:
+                    # 检测到环，移除环的最后一条边
+                    graph[node].remove(neighbor)
+                    graph[neighbor].remove(node)
 
-        return dfs(start)
+                    # 在 FKtoKDict 中找到并删除这条边
+                    removed = False
+                    for u in list(FKtoKDict.keys()):
+                        if u != node and u !=neighbor:
+                            continue
+                        relations = FKtoKDict[u]
+                        for rel in relations:
+                            _, v, _ = rel
+                            if v == node or v == neighbor:
+                                print(f"移除 FK-PK 关系: {u}: {rel}")
+                                FKtoKDict[u].remove(rel)
+                                removed = True
+                                continue
+                    if not removed:
+                        print("error")
+
+            stack.remove(node)
+            return False
+
+        # 遍历所有节点
+        for node in graph:
+            if node not in visited:
+                dfs(node)
+
+        return graph
 
     # 构建图
-    graph = {}
-    for src, relations in FKtoKDict.items():
+    adjacency_list = {}
+    for u, relations in FKtoKDict.items():
         for relation in relations:
-            _, target, _ = relation
-            if src not in graph:
-                graph[src] = []
-            graph[src].append(target)
+            _, v, _ = relation
+            if u not in adjacency_list:
+                adjacency_list[u] = []
+            if v not in adjacency_list:
+                adjacency_list[v] = []
+            adjacency_list[u].append(v)
+            adjacency_list[v].append(u)
 
-    # 检测环
-    for node in list(graph.keys()):
-        cycle = find_cycle(graph, node)
-        if cycle:
-            print("检测到环:", cycle)
-
-            # 打破环：移除环中的第一条边
-            first_edge_from = cycle[0]
-            first_edge_to = cycle[1]
-
-            print(f"移除边: {first_edge_from} -> {first_edge_to}")
-
-            # 在 FKtoKDict 中找到并删除这条边
-            removed = False
-            for table_name in list(FKtoKDict.keys()):
-                relations = FKtoKDict[table_name]
-                new_relations = []
-                for rel in relations:
-                    fk_col, target_table, pk_col = rel
-                    if fk_col == first_edge_from and target_table == first_edge_to:
-                        print(f"移除 FK-PK 关系: {rel}")
-                        removed = True
-                        continue
-                    new_relations.append(rel)
-                FKtoKDict[table_name] = new_relations
-
-            if not removed:
-                print("error")
+    print("原始图：", adjacency_list)
+    adjacency_list = remove_cycles(adjacency_list)
+    print("移除环后的图：", adjacency_list)  
 
     return FKtoKDict
 
