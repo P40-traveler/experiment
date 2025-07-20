@@ -1,0 +1,65 @@
+TAG_V0 is the 1th joined table with predicates: 
+TAG_V0 joins with TAG_E3 on column 6
+TAG_V0 joins with TAG_E0 on column 6
+TAG_E0 is the 2th joined table with predicates: 
+TAG_E0 joins with TAG_V3 on column 0
+TAG_E0 joins with TAG_V0 on column 6
+TAG_E0 joins with TAG_E3 on column 6
+TAG_E0 joins with TAG_E1 on column 0
+TAG_E1 is the 3th joined table with predicates: 
+TAG_E1 joins with TAG_V3 on column 0
+TAG_E1 joins with TAG_E0 on column 0
+TAG_E1 joins with TAG_V1 on column 6
+TAG_E1 joins with TAG_E2 on column 6
+TAG_E2 is the 4th joined table with predicates: 
+TAG_E2 joins with TAG_E1 on column 6
+TAG_E2 joins with TAG_V2 on column 1
+TAG_E2 joins with TAG_V1 on column 6
+TAG_E2 joins with TAG_E3 on column 1
+TAG_V2 is the 5th joined table with predicates: 
+TAG_V2 joins with TAG_E2 on column 1
+TAG_V2 joins with TAG_E3 on column 1
+TAG_V1 is the 6th joined table with predicates: 
+TAG_V1 joins with TAG_E1 on column 6
+TAG_V1 joins with TAG_E2 on column 6
+TAG_V3 is the 7th joined table with predicates: 
+TAG_V3 joins with TAG_E1 on column 0
+TAG_V3 joins with TAG_E0 on column 0
+TAG_E3 is the 8th joined table with predicates: 
+TAG_E3 joins with TAG_V0 on column 6
+TAG_E3 joins with TAG_V2 on column 1
+TAG_E3 joins with TAG_E0 on column 6
+TAG_E3 joins with TAG_E2 on column 1
+---
+TAG_V0 is the 1th joined table with predicates: 
+TAG_V0 joins with TAG_E0 on column 6
+TAG_V0 joins with TAG_E3 on column 6
+TAG_E3 is the 2th joined table with predicates: 
+TAG_E3 joins with TAG_E0 on column 6
+TAG_E3 joins with TAG_V2 on column 1
+TAG_E3 joins with TAG_E2 on column 1
+TAG_E3 joins with TAG_V0 on column 6
+TAG_E2 is the 3th joined table with predicates: 
+TAG_E2 joins with TAG_E1 on column 6
+TAG_E2 joins with TAG_V1 on column 6
+TAG_E2 joins with TAG_V2 on column 1
+TAG_E2 joins with TAG_E3 on column 1
+TAG_V1 is the 4th joined table with predicates: 
+TAG_V1 joins with TAG_E1 on column 6
+TAG_V1 joins with TAG_E2 on column 6
+TAG_E1 is the 5th joined table with predicates: 
+TAG_E1 joins with TAG_E2 on column 6
+TAG_E1 joins with TAG_V1 on column 6
+TAG_E1 joins with TAG_E0 on column 0
+TAG_E1 joins with TAG_V3 on column 0
+TAG_V3 is the 6th joined table with predicates: 
+TAG_V3 joins with TAG_E0 on column 0
+TAG_V3 joins with TAG_E1 on column 0
+TAG_V2 is the 7th joined table with predicates: 
+TAG_V2 joins with TAG_E2 on column 1
+TAG_V2 joins with TAG_E3 on column 1
+TAG_E0 is the 8th joined table with predicates: 
+TAG_E0 joins with TAG_V3 on column 0
+TAG_E0 joins with TAG_E3 on column 6
+TAG_E0 joins with TAG_E1 on column 0
+TAG_E0 joins with TAG_V0 on column 6
