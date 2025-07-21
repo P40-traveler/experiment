@@ -5,5 +5,6 @@ Source/*.cpp
 Source/build/*
 Source/.ipynb_checkpoints/*
 *.pkl
+res
 
 

@@ -249,14 +249,23 @@ def build_graph(pattern_path,safebound_instance,result_path='res'):
         print(f"处理顶点: tag_id={tag_id}, label_id={label_id}")
 
         for edge in pattern['edges']:
-            if str(edge['dst']) == tag_id or str(edge['src']) == tag_id:
-                
+            if str(edge['src']) == tag_id:
                 edge_label = str(edge['label_id'])
                 edge_tag = str(edge['tag_id'])
                 edge_tag = f"tag_e{edge_tag}"
                 print(f"处理边：tag_id={edge_tag}, label_id={edge_label}")
                 join_query.addAlias(f"0{edge_label}",edge_tag)
+
                 join_query.addJoin(f"tag_v{tag_id}", label_id, edge_tag, label_id)
+            elif str(edge['dst']) == tag_id:
+
+                edge_label = str(edge['label_id'])
+                edge_tag = str(edge['tag_id'])
+                edge_tag = f"tag_e{edge_tag}"
+                print(f"处理边：tag_id={edge_tag}, label_id={edge_label}")
+                join_query.addAlias(f"0{edge_label}",edge_tag)
+
+                join_query.addJoin(edge_tag, label_id, f"tag_v{tag_id}", label_id)
 
     join_query.buildJoinGraph()
     join_query.printJoinGraph()
@@ -441,7 +450,7 @@ if __name__ == "__main__":
 
     start_time = time.time() 
 
-    if not os.path.exists(file_path):
+    if not os.path.exists(file_path) or True:
         print("构建 SafeBound 实例...")
         safebound_instance,vertex_tables,edge_tables = build_safebound(data_dir, schema_path,result_path)
 
