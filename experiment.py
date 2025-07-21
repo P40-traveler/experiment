@@ -442,7 +442,7 @@ def sort_results_csv(result_file='res/results.csv'):
 
 if __name__ == "__main__":
     # 配置路径
-    data_dir = '/home/phy/lab/executing/pathce/datasets/ldbc/sf0.003'
+    data_dir = '/home/phy/lab/executing/pathce/datasets/ldbc/sf1'
     schema_path = '/home/phy/lab/executing/pathce/schemas/ldbc/ldbc_gcard_schema.json'
     pattern_path = '/home/phy/lab/executing/pathce/patterns/glogs'
     file_path = 'safebound_instance_lsqb.pkl'
@@ -450,7 +450,7 @@ if __name__ == "__main__":
 
     start_time = time.time() 
 
-    if not os.path.exists(file_path) or True:
+    if not os.path.exists(file_path):
         print("构建 SafeBound 实例...")
         safebound_instance,vertex_tables,edge_tables = build_safebound(data_dir, schema_path,result_path)
 
@@ -466,8 +466,8 @@ if __name__ == "__main__":
 
     for file in os.listdir(pattern_path):
         if file.endswith('.json'):
-            if file != "p2.json":
-                continue
+            #if file != "p2.json":
+            #    continue
             print(f"running:{file}")
             query_name = file.replace('.json', '')
             build_graph(f"{pattern_path}/{query_name}.json",safebound_instance,result_path)
