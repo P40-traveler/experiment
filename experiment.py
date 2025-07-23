@@ -194,7 +194,7 @@ def build_safebound(data_dir, schema_path,result_path):
     # print(f"Vertex Table Join Columns: {tableJoinCols}")
     # print(f"{FKtoKDict}")
 
-    detect_and_break_cycles(FKtoKDict)
+    # detect_and_break_cycles(FKtoKDict)
 
     safebound_instance = SafeBound(
             tableDFs=tableDFs,
@@ -233,9 +233,7 @@ def build_safebound(data_dir, schema_path,result_path):
     )
 
     return safebound_instance, vertex_tables, edge_tables
-def build_graph(pattern_path,safebound_instance,result_path='res'):
-    start_time = time.time()
-
+def build_graph(pattern_path,safebound_instance):
     with open(pattern_path, 'r') as f:
         pattern = json.load(f)
 
@@ -246,14 +244,14 @@ def build_graph(pattern_path,safebound_instance,result_path='res'):
         label_id = str(vertex['label_id'])
         join_query.addAlias(label_id,f"tag_v{tag_id}")
 
-        print(f"处理顶点: tag_id={tag_id}, label_id={label_id}")
+        #print(f"处理顶点: tag_id={tag_id}, label_id={label_id}")
 
         for edge in pattern['edges']:
             if str(edge['src']) == tag_id:
                 edge_label = str(edge['label_id'])
                 edge_tag = str(edge['tag_id'])
                 edge_tag = f"tag_e{edge_tag}"
-                print(f"处理边：tag_id={edge_tag}, label_id={edge_label}")
+                #print(f"处理边：tag_id={edge_tag}, label_id={edge_label}")
                 join_query.addAlias(f"0{edge_label}",edge_tag)
 
                 join_query.addJoin(f"tag_v{tag_id}", label_id, edge_tag, label_id)
@@ -262,45 +260,19 @@ def build_graph(pattern_path,safebound_instance,result_path='res'):
                 edge_label = str(edge['label_id'])
                 edge_tag = str(edge['tag_id'])
                 edge_tag = f"tag_e{edge_tag}"
-                print(f"处理边：tag_id={edge_tag}, label_id={edge_label}")
+                #print(f"处理边：tag_id={edge_tag}, label_id={edge_label}")
                 join_query.addAlias(f"0{edge_label}",edge_tag)
 
                 join_query.addJoin(edge_tag, label_id, f"tag_v{tag_id}", label_id)
 
     join_query.buildJoinGraph()
-    join_query.printJoinGraph()
+    #join_query.printJoinGraph()
 
     bound = safebound_instance.functionalFrequencyBound(join_query)
     print("Cardinality Bound: " + str(bound))
     # print("SafeBound Memory (kB): " + str(safebound_instance.memory()/1000))
 
-    # 写入结果
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    query_name = os.path.basename(pattern_path).replace('.json', '')
-
-    result_df = pd.DataFrame([{
-        "query_name": query_name,
-        "execution_time_seconds": round(elapsed_time, 6),
-        "cardinality_bound": bound
-    }])
-
-    result_file = os.path.join(result_path, "results.csv")
-    if not os.path.exists(result_path):
-        os.makedirs(result_path)
-
-    # 如果文件不存在则创建并写入 header，否则以追加模式写入
-    file_exists = os.path.isfile(result_file)
-
-    result_df.to_csv(
-        result_file,
-        mode='a',
-        header=not file_exists,
-        index=False
-    )
-
-    return safebound_instance, join_query
+    return bound
 # 没加vertex的版本
 def compute_true_cardinality(edge_tables):
 
@@ -446,7 +418,7 @@ if __name__ == "__main__":
     schema_path = '/home/phy/lab/executing/pathce/schemas/ldbc/ldbc_gcard_schema.json'
     pattern_path = '/home/phy/lab/executing/pathce/patterns/glogs'
     file_path = 'safebound_instance_lsqb.pkl'
-    result_path = './res'
+    result_path = 'res'
 
     start_time = time.time() 
 
@@ -466,11 +438,35 @@ if __name__ == "__main__":
 
     for file in os.listdir(pattern_path):
         if file.endswith('.json'):
-            #if file != "p2.json":
-            #    continue
             print(f"running:{file}")
             query_name = file.replace('.json', '')
-            build_graph(f"{pattern_path}/{query_name}.json",safebound_instance,result_path)
+
+            start_time1 = time.time()
+            for i in range(0,5):
+                bound = build_graph(f"{pattern_path}/{query_name}.json",safebound_instance)
+            
+            # 写入结果
+            end_time1 = time.time()
+            elapsed_time1 = (end_time1 - start_time1)/5
+            result_df = pd.DataFrame([{
+                "query_name": query_name,
+                "execution_time_seconds": round(elapsed_time1, 6),
+                "cardinality_bound": bound
+            }])
+
+            result_file = os.path.join(result_path, "results.csv")
+            if not os.path.exists(result_path):
+                os.makedirs(result_path)
+
+            # 如果文件不存在则创建并写入 header，否则以追加模式写入
+            file_exists = os.path.isfile(result_file)
+
+            result_df.to_csv(
+                result_file,
+                mode='a',
+                header=not file_exists,
+                index=False
+            )
 
     end_time = time.time() 
     elapsed_time = end_time - start_time

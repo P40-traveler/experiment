@@ -358,6 +358,7 @@ class SafeBound:
     def functionalFrequencyBound(self, joinQueryGraph, dbConn = None, verbose = 0):
         joinQueryGraph = joinQueryGraph.copy()
         joinQueryGraph.arbitrarilyBreakCycles()
+        
         joinQueryGraph.addColumnSuffixes()
         
         aliasesList = []

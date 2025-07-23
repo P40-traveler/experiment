@@ -1,4 +1,5 @@
 import json
+import os
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -22,11 +23,10 @@ def load_json_graph(filepath):
 
     return G
 
-def draw_graph(G):
+def draw_graph(G, output_path):
     pos = nx.spring_layout(G)
     plt.figure(figsize=(20, 14))
 
-    # 按 label_id 分配颜色（节点）
     node_color_map = {}
     for node, attr in G.nodes(data=True):
         label = attr['label']
@@ -35,7 +35,6 @@ def draw_graph(G):
         color = f'C{node_color_map[label]}'
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_color=color, node_size=800, label=f"Node Label {label}")
 
-    # 按 label_id 分配颜色（边）
     edge_color_map = {}
     for (u, v, attr) in G.edges(data=True):
         label = attr['label']
@@ -45,10 +44,10 @@ def draw_graph(G):
         nx.draw_networkx_edges(G, pos, edgelist=[(u, v)], edge_color=color, width=2, arrows=True, label=f"Edge Label {label}")
 
     node_labels = {n: f"Tag:{attr['tag']}\nLbl:{attr['label']}" for n, attr in G.nodes(data=True)}
-    nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=10)
+    nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=30)
 
     edge_labels = {(u, v): f"Tag:{attr['tag']}\nLbl:{attr['label']}" for u, v, attr in G.edges(data=True)}
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=10)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=30)
 
     # 图例
     handles, labels = plt.gca().get_legend_handles_labels()
@@ -58,12 +57,29 @@ def draw_graph(G):
     plt.title("Graph from p_.json")
     plt.axis('off')
     plt.tight_layout()
-    plt.show()
+    plt.savefig(output_path) 
+    plt.close()
 
 def main():
-    file_path = '/home/phy/lab/executing/pathce/patterns/glogs/p2.json'
-    G = load_json_graph(file_path)
-    draw_graph(G)
+    directory = '/home/phy/lab/executing/pathce/patterns/glogs/'
+    if not os.path.exists(directory):
+        print(f"Directory {directory} does not exist.")
+        return
+
+    json_files = [f for f in os.listdir(directory) if f.endswith('.json')]
+    if not json_files:
+        print(f"No JSON files found in {directory}.")
+        return
+
+    for json_file in json_files:
+        file_path = os.path.join(directory, json_file)
+        try:
+            G = load_json_graph(file_path)
+            output_file = os.path.splitext(file_path)[0] + '.png'
+            draw_graph(G, output_file)
+            print(f"Graph saved to {output_file}")
+        except Exception as e:
+            print(f"Error processing {file_path}: {e}")
 
 if __name__ == "__main__":
     main()

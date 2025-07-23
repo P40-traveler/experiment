@@ -93,13 +93,17 @@ class JoinQueryGraph:
         if rightAlias not in self.tableDict:
             self.tableDict[rightAlias] = rightAlias
             
+        # use list instead of set
         if leftAlias not in self.edgeDict:
-            self.edgeDict[leftAlias] = set()
+            self.edgeDict[leftAlias] = []
         if rightAlias not in self.edgeDict:
-            self.edgeDict[rightAlias] = set()
+            self.edgeDict[rightAlias] = []
         
-        self.edgeDict[leftAlias].add((rightAlias, rightJoinCol, leftJoinCol))
-        self.edgeDict[rightAlias].add((leftAlias, leftJoinCol, rightJoinCol))
+        # list without duplicates
+        if (rightAlias, rightJoinCol, leftJoinCol) not in self.edgeDict[leftAlias]:
+            self.edgeDict[leftAlias].append((rightAlias, rightJoinCol, leftJoinCol))
+        if (leftAlias, leftJoinCol, rightJoinCol) not in self.edgeDict[rightAlias]:
+            self.edgeDict[rightAlias].append((leftAlias, leftJoinCol, rightJoinCol))
         
         rightEqualityClass = None
         leftEqualityClass = None
@@ -119,7 +123,7 @@ class JoinQueryGraph:
             self.equalityClasses[rightEqualityClass].append(leftAliasAndCol)
         elif leftEqualityClass != rightEqualityClass:
             self.equalityClasses[leftEqualityClass].extend(self.equalityClasses[rightEqualityClass])
-            del self.equalityClasses[rightEqualityClass]        
+            del self.equalityClasses[rightEqualityClass]    
         
         
     def addSelectivityEstimate(self, alias, numSelectedRows):
@@ -153,6 +157,8 @@ class JoinQueryGraph:
                 self.equalityDict[member] = equalityClass
             
         for alias, edges in self.edgeDict.items():
+            #print(f"alias:{alias}")
+            #print(f"edges:{edges}")#find it
             alias = alias.upper()
             edgeAliases = []
             edgeJoinCols = []
