@@ -38,9 +38,9 @@ def parse_edge_table_name(table_name):
 # 这里把FKPK关系当做有向图，检测环并打破环
 def detect_and_break_cycles(FKtoKDict):
     def remove_cycles(graph):
-        visited = set()  # 记录访问过的节点
-        stack = set()  # 记录当前路径中的节点
-        parent = {}  # 记录每个节点的父节点
+        visited = set()
+        stack = set()
+        parent = {}
 
         def dfs(node):
             visited.add(node)
@@ -73,7 +73,6 @@ def detect_and_break_cycles(FKtoKDict):
             stack.remove(node)
             return False
 
-        # 遍历所有节点
         for node in graph:
             if node not in visited:
                 dfs(node)
@@ -120,7 +119,7 @@ def build_safebound(data_dir, schema_path,result_path):
             table_name = file.replace('.csv', '')
             
             # 顶点表
-            if '_' not in table_name:
+            if 'vertex' in table_name:
                 try:
                     df = pd.DataFrame()
                     tmp_df = pd.read_csv(os.path.join(data_dir, file))
@@ -148,7 +147,7 @@ def build_safebound(data_dir, schema_path,result_path):
                 try:
                     df = pd.DataFrame()
                     tmp_df = pd.read_csv(os.path.join(data_dir, file))
-                    src_name, dst_name = parse_edge_table_name(table_name)
+                    src_name = dst_name = "vertex"
 
                     if vertex_labels.get(src_name) is None or vertex_labels.get(dst_name) is None:
                         print(f"边表 {table_name} 中的src或dst标签未在schema中定义: {src_name}, {dst_name}")
@@ -217,6 +216,7 @@ def build_safebound(data_dir, schema_path,result_path):
     query_name = "safebound_init"
 
     result_df = pd.DataFrame([{
+        "folder": "-",
         "query_name": query_name,
         "execution_time_seconds": round(elapsed_time, 6),
         "cardinality_bound": "-"
@@ -319,82 +319,6 @@ def compute_true_cardinality(edge_tables):
                     break
 
     return len(result)
-
-# def compute_true_cardinality(vertex_tables,edge_tables):
-
-#     print(f"{list(edge_tables.keys())}")
-#     visited_edges = set()
-#     visited_vertexs = set()
-#     edge_names = list(edge_tables.keys())
-#     vertex_names = list(vertex_tables.keys())
-
-#     stage = 1
-
-#     current_stage_vertexs = set()
-#     current_stage_edges = set()
-
-#     result = vertex_tables[vertex_names[0]].copy()
-#     visited_vertexs.add(vertex_names[0])
-#     current_stage_vertexs.add(vertex_names[0])
-#     vertex_names.remove(vertex_names[0])
-#     print(f"add{vertex_names[0]}")
-
-#     while edge_names or vertex_names:
-#         print("111")
-#         if stage == 1:
-#             for e_name in edge_names:
-#                 if e_name in visited_edges:
-#                     continue
-
-#                 current_table = edge_tables[e_name]
-#                 print("A")
-#                 for column in current_table.columns.tolist():
-#                     if column in current_stage_vertexs:
-#                         # 检测自环,单独处理
-#                         columns_list = current_table.columns.tolist()
-#                         parts = columns_list[1].split('_')
-#                         if len(parts) >= 2:
-#                             column_name = parts[0]
-#                             suffix = parts[-1]
-#                             if suffix.startswith("dup"):
-#                                 result = result.merge(current_table, on = column_name)
-#                                 result.drop(columns=[f"{column_name}_dup"], inplace=True)
-#                                 tmp = pd.DataFrame()
-#                                 tmp[column_name] = current_table[f"{column_name}_dup"]
-#                                 tmp[f"{column_name}_dup"] = current_table[column_name]
-#                                 result = result.merge(tmp, on = column_name)
-#                                 result.drop(columns=[f"{column_name}_dup"], inplace=True)
-#                                 visited_edges.add(e_name)
-#                                 edge_names.remove(e_name)
-#                                 break
-
-#                         result = result.merge(current_table)
-#                         print(f"add{e_name}")
-#                         visited_edges.add(e_name)
-#                         current_stage_edges.add(e_name)
-#                         edge_names.remove(e_name)
-#                         break
-#             if vertex_names:
-#                 current_stage_vertexs = set()
-#                 stage = 2
-#         else:
-#             for edge_name in current_stage_edges:
-#                 print("B")
-#                 dst_column = edge_tables[edge_name].columns.tolist()[1]
-#                 if dst_column in vertex_names and dst_column not in visited_vertexs:
-#                     result = result.merge(vertex_tables[dst_column])
-#                     visited_vertexs.add(dst_column)
-#                     current_stage_vertexs.add(dst_column)
-#                     vertex_names.remove(dst_column)
-
-#             if edge_names:
-#                 current_stage_vertexs = set()
-#                 stage = 1
-
-#     return len(result)
-
-
-
 def sort_results_csv(result_file='res/results.csv'):
     if not os.path.exists(result_file):
         print(f"{result_file} 不存在")
@@ -402,23 +326,18 @@ def sort_results_csv(result_file='res/results.csv'):
 
     results_df = pd.read_csv(result_file)
 
-    # 对query名排序
-    results_df['query_name'] = pd.Categorical(
-        results_df['query_name'],
-        categories=sorted(results_df['query_name'].unique(), key=lambda x: x)
-    )
-    sorted_df = results_df.sort_values(by='query_name').reset_index(drop=True)
+    sorted_df = results_df.sort_values(by=['folder', 'query_name']).reset_index(drop=True)
 
     sorted_df.to_csv(result_file, index=False)
     print(f"{result_file} 已排序")
 
 if __name__ == "__main__":
     # 配置路径
-    data_dir = '/home/phy/lab/executing/pathce/datasets/ldbc/sf1'
-    schema_path = '/home/phy/lab/executing/pathce/schemas/ldbc/ldbc_gcard_schema.json'
-    pattern_path = '/home/phy/lab/executing/pathce/patterns/glogs'
-    file_path = 'safebound_instance_lsqb.pkl'
-    result_path = 'res'
+    data_dir = '/home/phy/lab/executing/pathce/datasets/aids_merged/aids_merged'
+    schema_path = '/home/phy/lab/executing/pathce/schemas/aids_merged/aids_merged_gcard_schema.json'
+    pattern_path = '/home/phy/lab/executing/pathce/patterns/aids_merged'
+    file_path = 'safebound_instance_aids.pkl'
+    result_path = 'res/aids_merged'
 
     start_time = time.time() 
 
@@ -428,7 +347,7 @@ if __name__ == "__main__":
 
         # print("True Cardinality: " + str(compute_true_cardinality(edge_tables)))
 
-        with open('safebound_instance_lsqb.pkl', 'wb') as f:
+        with open('safebound_instance_aids.pkl', 'wb') as f:
             pickle.dump(safebound_instance, f)
         print("SafeBound 实例已保存至 safebound_instance.pkl")
     else:
@@ -436,37 +355,39 @@ if __name__ == "__main__":
             safebound_instance = pickle.load(f)
         print("SafeBound 实例已从 safebound_instance.pkl 加载")        
 
-    for file in os.listdir(pattern_path):
-        if file.endswith('.json'):
-            print(f"running:{file}")
-            query_name = file.replace('.json', '')
+    for files in os.listdir(pattern_path):
+        for file in os.listdir(f"{pattern_path}/{files}"):
+            if file.endswith('.json'):
+                print(f"running:{file} in {files}")
+                query_name = file.replace('.json', '')
 
-            start_time1 = time.time()
-            for i in range(0,5):
-                bound = build_graph(f"{pattern_path}/{query_name}.json",safebound_instance)
-            
-            # 写入结果
-            end_time1 = time.time()
-            elapsed_time1 = (end_time1 - start_time1)/5
-            result_df = pd.DataFrame([{
-                "query_name": query_name,
-                "execution_time_seconds": round(elapsed_time1, 6),
-                "cardinality_bound": bound
-            }])
+                start_time1 = time.time()
+                for i in range(0,5):
+                    bound = build_graph(f"{pattern_path}/{files}/{query_name}.json",safebound_instance)
+                
+                # 写入结果
+                end_time1 = time.time()
+                elapsed_time1 = (end_time1 - start_time1)/5
+                result_df = pd.DataFrame([{
+                    "folder": files,
+                    "query_name": query_name,
+                    "execution_time_seconds": round(elapsed_time1, 6),
+                    "cardinality_bound": bound
+                }])
 
-            result_file = os.path.join(result_path, "results.csv")
-            if not os.path.exists(result_path):
-                os.makedirs(result_path)
+                result_file = os.path.join(result_path, "results.csv")
+                if not os.path.exists(result_path):
+                    os.makedirs(result_path)
 
-            # 如果文件不存在则创建并写入 header，否则以追加模式写入
-            file_exists = os.path.isfile(result_file)
+                # 如果文件不存在则创建并写入 header，否则以追加模式写入
+                file_exists = os.path.isfile(result_file)
 
-            result_df.to_csv(
-                result_file,
-                mode='a',
-                header=not file_exists,
-                index=False
-            )
+                result_df.to_csv(
+                    result_file,
+                    mode='a',
+                    header=not file_exists,
+                    index=False
+                )
 
     end_time = time.time() 
     elapsed_time = end_time - start_time
