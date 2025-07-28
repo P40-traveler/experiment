@@ -153,8 +153,9 @@ def build_safebound(data_dir, schema_path,result_path):
                         print(f"边表 {table_name} 中的src或dst标签未在schema中定义: {src_name}, {dst_name}")
                         continue
                     if edge_labels.get(table_name) is None:
-                        print(f"边表 {table_name} 未在schema中定义")
+                        # print(f"边表 {table_name} 未在schema中定义")
                         continue
+                    print(f"table_name已加载{table_name}")
 
                     src_label = vertex_labels[src_name]
                     dst_label = vertex_labels[dst_name]
@@ -272,127 +273,6 @@ def build_graph(pattern_path,safebound_instance):
     # print("SafeBound Memory (kB): " + str(safebound_instance.memory()/1000))
 
     return bound
-# 没加vertex的版本
-def compute_true_cardinality(edge_tables):
-
-    print(f"{list(edge_tables.keys())}")
-    visited_edges = set()
-    edge_names = list(edge_tables.keys())
-
-    result = edge_tables[edge_names[0]].copy()
-    visited_edges.add(edge_names[0])
-    edge_names.remove(edge_names[0])
-    print(f"add{edge_names[0]}")
-
-    while edge_names:
-        for e_name in edge_names:
-            if e_name in visited_edges:
-                continue
-
-            current_table = edge_tables[e_name]
-
-            for column in current_table.columns:
-                if column in result.columns:
-                    # 检测自环,单独处理
-                    columns_list = current_table.columns.tolist()
-                    parts = columns_list[1].split('_')
-                    if len(parts) >= 2:
-                        column_name = parts[0]
-                        suffix = parts[-1]
-                        if suffix.startswith("dup"):
-                            result = result.merge(current_table, on = column_name)
-                            result.drop(columns=[f"{column_name}_dup"], inplace=True)
-                            tmp = pd.DataFrame()
-                            tmp[column_name] = current_table[f"{column_name}_dup"]
-                            tmp[f"{column_name}_dup"] = current_table[column_name]
-                            result = result.merge(tmp, on = column_name)
-                            result.drop(columns=[f"{column_name}_dup"], inplace=True)
-                            visited_edges.add(e_name)
-                            edge_names.remove(e_name)
-                            break
-
-                    result = result.merge(current_table)
-                    print(f"add{e_name}")
-                    visited_edges.add(e_name)
-                    edge_names.remove(e_name)
-                    break
-
-    return len(result)
-
-# def compute_true_cardinality(vertex_tables,edge_tables):
-
-#     print(f"{list(edge_tables.keys())}")
-#     visited_edges = set()
-#     visited_vertexs = set()
-#     edge_names = list(edge_tables.keys())
-#     vertex_names = list(vertex_tables.keys())
-
-#     stage = 1
-
-#     current_stage_vertexs = set()
-#     current_stage_edges = set()
-
-#     result = vertex_tables[vertex_names[0]].copy()
-#     visited_vertexs.add(vertex_names[0])
-#     current_stage_vertexs.add(vertex_names[0])
-#     vertex_names.remove(vertex_names[0])
-#     print(f"add{vertex_names[0]}")
-
-#     while edge_names or vertex_names:
-#         print("111")
-#         if stage == 1:
-#             for e_name in edge_names:
-#                 if e_name in visited_edges:
-#                     continue
-
-#                 current_table = edge_tables[e_name]
-#                 print("A")
-#                 for column in current_table.columns.tolist():
-#                     if column in current_stage_vertexs:
-#                         # 检测自环,单独处理
-#                         columns_list = current_table.columns.tolist()
-#                         parts = columns_list[1].split('_')
-#                         if len(parts) >= 2:
-#                             column_name = parts[0]
-#                             suffix = parts[-1]
-#                             if suffix.startswith("dup"):
-#                                 result = result.merge(current_table, on = column_name)
-#                                 result.drop(columns=[f"{column_name}_dup"], inplace=True)
-#                                 tmp = pd.DataFrame()
-#                                 tmp[column_name] = current_table[f"{column_name}_dup"]
-#                                 tmp[f"{column_name}_dup"] = current_table[column_name]
-#                                 result = result.merge(tmp, on = column_name)
-#                                 result.drop(columns=[f"{column_name}_dup"], inplace=True)
-#                                 visited_edges.add(e_name)
-#                                 edge_names.remove(e_name)
-#                                 break
-
-#                         result = result.merge(current_table)
-#                         print(f"add{e_name}")
-#                         visited_edges.add(e_name)
-#                         current_stage_edges.add(e_name)
-#                         edge_names.remove(e_name)
-#                         break
-#             if vertex_names:
-#                 current_stage_vertexs = set()
-#                 stage = 2
-#         else:
-#             for edge_name in current_stage_edges:
-#                 print("B")
-#                 dst_column = edge_tables[edge_name].columns.tolist()[1]
-#                 if dst_column in vertex_names and dst_column not in visited_vertexs:
-#                     result = result.merge(vertex_tables[dst_column])
-#                     visited_vertexs.add(dst_column)
-#                     current_stage_vertexs.add(dst_column)
-#                     vertex_names.remove(dst_column)
-
-#             if edge_names:
-#                 current_stage_vertexs = set()
-#                 stage = 1
-
-#     return len(result)
-
-
 
 def sort_results_csv(result_file='res/results.csv'):
     if not os.path.exists(result_file):
@@ -415,19 +295,19 @@ if __name__ == "__main__":
     # 配置路径
     data_dir = '/home/phy/lab/executing/pathce/datasets/ldbc/sf1'
     schema_path = '/home/phy/lab/executing/pathce/schemas/ldbc/ldbc_gcard_schema.json'
-    pattern_path = '/home/phy/lab/executing/pathce/patterns/glogs'
-    file_path = 'safebound_instance_lsqb.pkl'
-    result_path = 'res'
+    pattern_path = '/home/phy/lab/executing/pathce/patterns/lsqb'
+    file_path = 'safebound_instance_lsqb_3path.pkl'
+    result_path = 'res/3pathtest'
 
     start_time = time.time() 
 
-    if not os.path.exists(file_path):
+    if not os.path.exists(file_path) or True:
         print("构建 SafeBound 实例...")
         safebound_instance,vertex_tables,edge_tables = build_safebound(data_dir, schema_path,result_path)
 
         # print("True Cardinality: " + str(compute_true_cardinality(edge_tables)))
 
-        with open('safebound_instance_lsqb.pkl', 'wb') as f:
+        with open('safebound_instance_lsqb_3path.pkl', 'wb') as f:
             pickle.dump(safebound_instance, f)
         print("SafeBound 实例已保存至 safebound_instance.pkl")
     else:
@@ -436,7 +316,7 @@ if __name__ == "__main__":
         print("SafeBound 实例已从 safebound_instance.pkl 加载")        
 
     for file in os.listdir(pattern_path):
-        if file.endswith('.json'):
+        if file.endswith('q6.json'):
             print(f"running:{file}")
             query_name = file.replace('.json', '')
 
